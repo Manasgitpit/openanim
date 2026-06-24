@@ -873,3 +873,15 @@ section { position: relative; z-index: 1; }
 .video-ctrl-btn:hover { color: #A7C080; }
 .video-spacer { flex: 1; }
 
+/* ── Right Panel shimmer animation ── */
+@keyframes shimmer {
+  0%   { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* ── Generating indicator ── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(167,192,128,0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(167,192,128,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(167,192,128,0);   }
+}

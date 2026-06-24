@@ -1,27 +1,32 @@
-import Nav from '@/components/Nav';
-import Hero from '@/components/Hero';
-import HowItWorks from '@/components/HowItWorks';
-import Providers from '@/components/Providers';
-import WhyDeterministic from '@/components/WhyDeterministic';
-import Examples from '@/components/Examples';
-import Acknowledgments from '@/components/Acknowledgments';
-import Waitlist from '@/components/Waitlist';
-import Footer from '@/components/Footer';
+import { auth } from "@/auth";
+import AppShell from "@/components/app/AppShell";
 
-export default function Home() {
-  return (
-    <>
-      <Nav />
-      <main>
-        <Hero />
-        <HowItWorks />
-        <Providers />
-        <WhyDeterministic />
-        <Examples />
-        <Acknowledgments />
-        <Waitlist />
-      </main>
-      <Footer />
-    </>
-  );
+/**
+ * Root page — replaces the static marketing landing page.
+ *
+ * Behaviour:
+ *  • Authenticated  → AppShell with cloud mode enabled + real session
+ *  • Guest (no auth) → AppShell in guest mode (mock pipeline, temp state)
+ *
+ * auth() is wrapped in try/catch so a missing AUTH_SECRET or unconfigured
+ * Google OAuth never crashes the page — it simply falls back to guest mode.
+ */
+export default async function Home() {
+  let userInfo = null;
+
+  try {
+    const session = await auth();
+    if (session?.user) {
+      userInfo = {
+        name: session.user.name ?? null,
+        email: session.user.email ?? null,
+        image: session.user.image ?? null,
+      };
+    }
+  } catch {
+    // Auth not configured (missing secret / OAuth creds) — run as guest
+    userInfo = null;
+  }
+
+  return <AppShell userInfo={userInfo} />;
 }

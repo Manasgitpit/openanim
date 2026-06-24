@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Activity } from "lucide-react";
-import ArtifactCard from "./ArtifactCard";
-import PipelineViz from "./PipelineViz";
+import { motion } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 import type { SessionMessage } from "@/lib/mock-session";
 
 interface MessageProps {
@@ -14,29 +12,54 @@ interface MessageProps {
 export default function Message({ message }: MessageProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
     >
-      {message.role === "user" && <UserMessage message={message} />}
-      {message.role === "orchestrator" && <OrchestratorMessage message={message} />}
-      {message.role === "pipeline" && <PipelineMessage message={message} />}
-      {message.role === "artifact" && (
-        <ArtifactCard artifact={message.artifact} />
-      )}
-      {message.role === "code" && <CodeMessage message={message} />}
+      {message.role === "user"            && <UserMessage message={message} />}
+      {message.role === "orchestrator"    && <OrchestratorMessage message={message} />}
+      {message.role === "render-complete" && <RenderCompleteBadge message={message} />}
+      {message.role === "code"            && <CodeMessage message={message} />}
+      {/* pipeline and artifact roles are intentionally not rendered in chat */}
     </motion.div>
   );
 }
 
-function UserMessage({ message }: { message: Extract<SessionMessage, { role: "user" }> }) {
+// ── User message ──────────────────────────────────────────────────────────────
+
+function UserMessage({
+  message,
+}: {
+  message: Extract<SessionMessage, { role: "user" }>;
+}) {
   return (
-    <div className="flex justify-end">
+    <div style={{ display: "flex", justifyContent: "flex-end" }}>
       <div>
-        <div className="bg-app-bg2 border border-white/[0.08] text-app-fg1 text-sm px-4 py-2.5 rounded-sm max-w-[75%] font-sans leading-relaxed">
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            color: "var(--fg-1)",
+            fontSize: "0.875rem",
+            padding: "0.6rem 1rem",
+            borderRadius: "12px 12px 2px 12px",
+            maxWidth: "72%",
+            fontFamily: "var(--font-sans)",
+            lineHeight: 1.6,
+          }}
+        >
           {message.content}
         </div>
-        <div className="font-mono text-[9px] text-app-fg3/60 text-right mt-1 pr-0.5" suppressHydrationWarning>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.58rem",
+            color: "rgba(157,169,160,0.35)",
+            textAlign: "right",
+            marginTop: "0.25rem",
+          }}
+          suppressHydrationWarning
+        >
           {formatTs(message.ts)}
         </div>
       </div>
@@ -44,97 +67,131 @@ function UserMessage({ message }: { message: Extract<SessionMessage, { role: "us
   );
 }
 
-function OrchestratorMessage({ message }: { message: Extract<SessionMessage, { role: "orchestrator" }> }) {
+// ── Orchestrator text reply ───────────────────────────────────────────────────
+
+function OrchestratorMessage({
+  message,
+}: {
+  message: Extract<SessionMessage, { role: "orchestrator" }>;
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-app-fg3/60">
-          Orchestrator
-        </span>
-        <span className="font-mono text-[9px] text-app-fg3/40" suppressHydrationWarning>{formatTs(message.ts)}</span>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.58rem",
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "rgba(157,169,160,0.4)",
+        }}
+      >
+        OpenAnim
+      </span>
       <div
-        className="text-app-fg2 text-sm leading-relaxed font-sans"
+        style={{
+          color: "var(--fg-2)",
+          fontSize: "0.875rem",
+          lineHeight: 1.7,
+          fontFamily: "var(--font-sans)",
+        }}
         dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
       />
     </div>
   );
 }
 
-function PipelineMessage({ message }: { message: Extract<SessionMessage, { role: "pipeline" }> }) {
-  const [open, setOpen] = useState(false);
-  const doneCount = message.steps.filter((s) => s.status === "done").length;
+// ── Render complete badge ─────────────────────────────────────────────────────
+// Compact one-line acknowledgment. No video, no pipeline details.
 
+function RenderCompleteBadge({
+  message,
+}: {
+  message: Extract<SessionMessage, { role: "render-complete" }>;
+}) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-      {/* Clickable header */}
-      <button
-        onClick={() => setOpen((o) => !o)}
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.5rem",
+        background: "rgba(167,192,128,0.07)",
+        border: "1px solid rgba(167,192,128,0.2)",
+        borderRadius: "6px",
+        padding: "0.45rem 0.875rem",
+      }}
+    >
+      <CheckCircle2
+        size={13}
+        style={{ color: "#A7C080", flexShrink: 0 }}
+      />
+      <span
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          background: "var(--bg-1)",
-          border: "1px solid var(--border)",
-          borderRadius: "3px",
-          padding: "0.45rem 0.75rem",
-          cursor: "pointer",
-          width: "100%",
-          textAlign: "left",
-          transition: "border-color 0.15s",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          color: "var(--fg-2)",
+          letterSpacing: "0.03em",
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(211,198,170,0.2)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; }}
       >
-        <Activity size={10} style={{ color: "#A7C080", flexShrink: 0 }} />
-        <span style={{
-          fontFamily: "var(--font-mono)", fontSize: "0.6rem",
-          letterSpacing: "0.12em", textTransform: "uppercase",
-          color: "rgba(157,169,160,0.55)", flex: 1,
-        }}>
-          Render Pipeline
-        </span>
-        <span style={{
-          fontFamily: "var(--font-mono)", fontSize: "0.55rem",
+        Render complete
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.62rem",
           color: "rgba(157,169,160,0.4)",
-          background: "var(--bg-2)",
-          border: "1px solid var(--border)",
-          padding: "0.1rem 0.4rem",
-          borderRadius: "2px",
-        }}>
-          {doneCount}/{message.steps.length}
-        </span>
-        <span style={{
-          fontFamily: "var(--font-mono)", fontSize: "0.7rem",
-          color: "rgba(157,169,160,0.35)",
-          marginLeft: "0.25rem",
-          transition: "transform 0.2s",
-          display: "inline-block",
-          transform: open ? "rotate(90deg)" : "rotate(0deg)",
-        }}>
-          ›
-        </span>
-      </button>
-
-      {/* Collapsible steps */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-            style={{ overflow: "hidden" }}
-          >
-            <PipelineViz steps={message.steps} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        }}
+      >
+        ·
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.62rem",
+          color: "rgba(167,192,128,0.7)",
+        }}
+      >
+        {message.durationSec}s
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.62rem",
+          color: "rgba(157,169,160,0.4)",
+        }}
+      >
+        ·
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.62rem",
+          color: "rgba(157,169,160,0.4)",
+        }}
+      >
+        v{message.version}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.58rem",
+          color: "rgba(157,169,160,0.25)",
+          marginLeft: "0.1rem",
+        }}
+        suppressHydrationWarning
+      >
+        {formatTs(message.ts)}
+      </span>
     </div>
   );
 }
 
-function CodeMessage({ message }: { message: Extract<SessionMessage, { role: "code" }> }) {
+// ── Code block ────────────────────────────────────────────────────────────────
+
+function CodeMessage({
+  message,
+}: {
+  message: Extract<SessionMessage, { role: "code" }>;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -144,35 +201,89 @@ function CodeMessage({ message }: { message: Extract<SessionMessage, { role: "co
   };
 
   return (
-    <div className="bg-app-bg1 border border-white/[0.08] rounded-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.08]">
-        <span className="font-mono text-[9px] uppercase tracking-wider text-app-primary/80">
+    <div
+      style={{
+        background: "var(--bg-1)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "6px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0.5rem 1rem",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.62rem",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "rgba(167,192,128,0.7)",
+          }}
+        >
           {message.lang}
         </span>
         <button
           onClick={copy}
-          className="font-mono text-[9px] text-app-fg3 hover:text-app-fg1 transition-colors"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.62rem",
+            color: "rgba(157,169,160,0.5)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--fg-1)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color =
+              "rgba(157,169,160,0.5)";
+          }}
         >
-          {copied ? "Copied!" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="font-mono text-xs text-app-fg2 p-4 overflow-x-auto leading-relaxed">
+      <pre
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.78rem",
+          color: "var(--fg-2)",
+          padding: "1rem",
+          overflowX: "auto",
+          lineHeight: 1.6,
+          margin: 0,
+        }}
+      >
         <code>{message.content}</code>
       </pre>
     </div>
   );
 }
 
-/* Minimal markdown renderer — handles **bold** and `code` */
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function renderMarkdown(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong class=\"text-app-fg1 font-medium\">$1</strong>")
-    .replace(/`(.+?)`/g, "<code class=\"font-mono text-app-primary bg-app-bg2 px-1 text-xs rounded-sm\">$1</code>")
+    .replace(
+      /\*\*(.+?)\*\*/g,
+      `<strong style="color:var(--fg-1);font-weight:500">$1</strong>`,
+    )
+    .replace(
+      /`(.+?)`/g,
+      `<code style="font-family:var(--font-mono);font-size:0.8em;color:#A7C080;background:var(--bg-2);padding:0.1em 0.35em;border-radius:3px">$1</code>`,
+    )
     .replace(/\n/g, "<br />");
 }
 
 function formatTs(_ts: string) {
-  // Rendered client-only via suppressHydrationWarning on the parent
   if (typeof window === "undefined") return "";
   const d = new Date(_ts);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;

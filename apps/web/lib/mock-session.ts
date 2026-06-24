@@ -44,11 +44,13 @@ export type SceneNode = {
 };
 
 export type SessionMessage =
-  | { id: string; role: "user"; content: string; ts: string }
-  | { id: string; role: "orchestrator"; content: string; ts: string }
-  | { id: string; role: "pipeline"; steps: PipelineStep[]; ts: string }
-  | { id: string; role: "artifact"; artifact: ArtifactData; ts: string }
-  | { id: string; role: "code"; lang: string; content: string; ts: string };
+  | { id: string; role: "user";             content: string;      ts: string }
+  | { id: string; role: "orchestrator";    content: string;      ts: string }
+  | { id: string; role: "pipeline";        steps: PipelineStep[]; ts: string }
+  | { id: string; role: "artifact";        artifact: ArtifactData; ts: string }
+  | { id: string; role: "code";            lang: string; content: string; ts: string }
+  /** Compact in-chat acknowledgment shown after a successful render. */
+  | { id: string; role: "render-complete"; name: string; version: string; durationSec: number; ts: string };
 
 export type Session = {
   id: string;

@@ -5,9 +5,11 @@ import { useRef, useState } from "react";
 interface PromptInputProps {
   onSubmit: (text: string) => void;
   isStreaming: boolean;
+  /** Whether there is already an active session with messages */
+  hasSession?: boolean;
 }
 
-export default function PromptInput({ onSubmit, isStreaming }: PromptInputProps) {
+export default function PromptInput({ onSubmit, isStreaming, hasSession = false }: PromptInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,7 +58,7 @@ export default function PromptInput({ onSubmit, isStreaming }: PromptInputProps)
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={isStreaming}
-          placeholder="Describe a scene to compile…"
+          placeholder={hasSession ? "Describe a change, ask a question, or start a new scene…" : "Describe a scene to compile…"}
           rows={3}
           style={{
             width: "100%",
